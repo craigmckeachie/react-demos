@@ -1,5 +1,5 @@
 const baseUrl = 'http://localhost:3000';
-const url = `${baseUrl}/photos`;
+const url = `${baseUrl}/photo`;
 
 function translateStatusToErrorMessage(status) {
   switch (status) {
@@ -55,27 +55,14 @@ const photoAPI = {
   },
 };
 
+const { QueryClient, QueryClientProvider, useQuery } = window.ReactQuery;
+
 function usePhotos() {
-  const [loading, setLoading] = React.useState(false);
-  const [photos, setPhotos] = React.useState([]);
-  const [error, setError] = React.useState(null);
-
-  React.useEffect(() => {
-    setLoading(true);
-    setError(null);
-
-    photoAPI
-      .getAll(1)
-      .then((data) => {
-        setPhotos(data);
-        setLoading(false);
-      })
-      .catch((error) => {
-        setError(error.message);
-        setLoading(false);
-      });
-  }, []);
-
+  const {
+    isLoading: loading,
+    data: photos,
+    error,
+  } = useQuery('photos', () => photoAPI.getAll(1));
   return { loading, photos, error };
 }
 
@@ -83,7 +70,7 @@ function PhotoList() {
   const { loading, photos, error } = usePhotos();
 
   if (error) {
-    return <div>{error}</div>;
+    return <div>{error.message}</div>;
   } else if (loading) {
     return <div>Loading...</div>;
   } else {
@@ -102,4 +89,14 @@ function PhotoList() {
   }
 }
 
-ReactDOM.render(<PhotoList />, document.getElementById('root'));
+const queryClient = new QueryClient();
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <PhotoList />
+    </QueryClientProvider>
+  );
+}
+
+ReactDOM.render(<App />, document.getElementById('root'));
